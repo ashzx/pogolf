@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <title>PoGolf</title>
+    <link rel="stylesheet" href="./assets/css/fontawesome.min.css">
+    <link rel="stylesheet" href="./assets/css/brands.min.css">
+</head>
+
+<style>
+    @keyframes shine-quick {
+        100% {
+            box-shadow: unset;
+        }
+        0% {
+            box-shadow: 0 0 8px 8px rgba(255, 255, 255, 0.7);
+        }
+    }
+
+    .shine-quick {
+        animation: shine-quick 1s forwards;
+    }
+
+    .move-template:nth-child(1) .down-arrow {
+        display: none;
+    }
+</style>
+
+<body class="bg-gray-900 text-white flex justify-center items-flex-start md:items-center">
+    <div class="fixed top-5 right-5 space-y-3 z-1000" id="toast-container">
+
+    </div>
+    <div class="container max-w-[80vw] mt-5 md:max-w-164  mx-auto">
+        <div class="flex flex-col items-center">
+            <h1 class="text-3xl font-bold mb-8">PoGolf</h1>
+
+            <div id="invalid-game" class="hidden">
+                <div class="flex items-center space-x-2 bg-red-500 text-white p-4 rounded-lg">
+                    <span class="text-lg">Invalid game link.</span>
+                </div>
+            </div>
+
+            <div id="game-container">
+                <!-- Title -->
+                <h2 class="text-xl mb-6 text-center">
+                    Get from the start Pokémon to the end Pokémon by using names that start with what the previous one
+                    ends
+                    with, in the fewest moves.
+                    <small>
+                        <br>e.g. Ekans -> Sceptile -> Eternatus
+                    </small>
+                </h2>
+                <hr class="border-gray-300 mb-6" />
+                <!-- Game Grid -->
+                <div class="grid grid-cols-7 sticky top-0 bg-gray-900 py-4">
+                    <!-- Row 1 -->
+                    <div class="flex justify-center col-span-3" id="word-one-container">
+                    </div>
+                    <!-- Right arrow -->
+                    <div class="flex justify-center items-center col-span-1">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="flex justify-center col-span-3" id="word-two-container">
+                    </div>
+                </div>
+                <hr class="border-gray-300 my-6" />
+
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="grid grid-cols-1 gap-2" id="move-container">
+
+                    </div>
+                </div>
+                <div class="flex justify-center items-center mt-8 mb-8 flex-wrap" id="guess-form">
+                    <!-- Input -->
+                    <div class="flex basis-full justify-center items-center">
+                        <input type="text"
+                            class="mr-2 w-64  py-2 px-4 bg-gray-800 text-white rounded-lg font-semibold border border-gray-600 focus:outline-none focus:border-teal-500 mt-6"
+                            placeholder="Enter a Pokémon name" id="move" />
+
+                        <!-- Input Button -->
+                        <button class="mt-6 py-2 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer" id="submit-move">
+                            Submit
+                        </button>
+                    </div>
+                    <!-- Give up? -->
+                    <a class="flex-shrink-0 mt-6 py-2 px-4 rounded-lg font-semibold hover:bg-red-600 cursor-pointer" title="Struggling?" id="give-up">
+                        Give up?
+                    </a>
+                </div>
+            </div>
+
+            <div class="flex justify-center play-again-button hidden my-4 sticky bottom-0 bg-gray-900 py-2 w-100 flex-col" id="play-again-button-container">
+                <p class="my-2 text-center font-bold you-won hidden">
+                    You scored <span class="score"></span>
+                </p>
+                <p class="my-2 text-center font-bold you-gave-up hidden">
+                    You gave up on the challenge.
+                </p>
+                <button id="play-again"
+                    class="py-2 px-4 mb-2 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer">
+                    New Game
+                </button>
+                <button id="see-results"
+                    class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer">
+                    See Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <template id="top-words-template">
+        <div
+            class="md:min-w-64 w-auto flex-grow-1 bg-gray-800 rounded-lg flex justify-center items-center text-xl font-semibold border border-gray-600 p-8 pogolf-word">
+            </div>
+    </template>
+
+    <template id="final-score-move-template">
+        <div class="flex justify-center flex-col move-template">
+            <div class="flex justify-center items-center my-2 down-arrow">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3">
+                    </path>
+                </svg>
+            </div>
+            <div
+                class="bg-gray-800 rounded-lg flex justify-center items-center text-xl font-semibold border border-gray-600 px-8 py-4 pogolf-word">
+            </div>
+        </div>
+    </template>
+
+    <template id="move-template">
+        <div class="flex justify-center">
+            <div
+                class="my-2 bg-gray-800 rounded-lg flex justify-center items-center text-xl font-semibold border border-gray-600 px-8 py-4 pogolf-word w-[80vw] md:w-64">
+            </div>
+        </div>
+    </template>
+
+    <template id="toast">
+        <div id="toast-danger z-1000"
+            class="flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-sm dark:text-gray-400 dark:bg-gray-800"
+            role="alert">
+            <div
+                class="inline-flex items-center justify-center shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200">
+                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                    viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z" />
+                </svg>
+                <span class="sr-only">Error icon</span>
+            </div>
+            <div class="ms-3 text-sm font-normal toast-text">Item has been deleted.</div>
+            <button type="button"
+                class="cursor-pointer ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700"
+                data-dismiss-target="#toast-danger" aria-label="Close" onclick="this.parentElement.remove()">
+                <span class="sr-only">Close</span>&times;
+            </button>
+        </div>
+    </template>
+
+    <template id="toast-success">
+        <div id="toast-success z-1000"
+            class="flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-sm dark:text-gray-400 dark:bg-gray-800"
+            role="alert">
+            <div
+                class="inline-flex items-center justify-center shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
+                !
+                <span class="sr-only">Success icon</span>
+            </div>
+            <div class="ms-3 text-sm font-normal toast-text">Item has been deleted.</div>
+            <button type="button"
+                class="ms-auto cursor-pointer -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700"
+                data-dismiss-target="#toast-success" aria-label="Close" onclick="this.parentElement.remove()">
+                <span class="sr-only">Close</span>&times;
+            </button>
+        </div>
+    </template>
+
+    <div id="modal-fail" class="fixed inset-0 bg-black/[.8] flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg w-128 p-6 space-y-4 shadow-xl relative max-h-[80vh] overflow-y-auto">
+            <button data-close="modal-fail"
+                class="cursor-pointer absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-xl font-bold closeModal">&times;</button>
+            <div class="text-center">
+                <h2 class="text-2xl font-semibold text-gray-900">Given up!</h2>
+                <p class="mt-2 text-gray-700">
+                    You gave up on the challenge.
+                </p>
+            </div>
+
+            <hr class="border-gray-300 my-2" />
+            <div class="grid grid-cols-1 gap-1">
+                <button class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
+                    Start a new game
+                </button>
+            </div>
+            <hr class="border-gray-300 my-2" />
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold text-gray-900">Our route:</h3>
+                    <div class="our-modal-moves">
+
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold text-gray-900">Potential Route:</h3>
+                    <div class="your-modal-hint">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal"
+        class="fixed inset-0 bg-black bg-black/[.8] flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg w-128 p-6 space-y-4 shadow-xl relative max-h-[80vh] overflow-y-auto">
+            <button data-close="modal"
+                class="cursor-pointer absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-xl font-bold closeModal">&times;</button>
+            <div class="text-center">
+                <h2 class="text-2xl font-semibold text-gray-900">Congratulations!</h2>
+                <p class="mt-2 text-gray-700">
+                    You completed the challenge in <span id="move-count"></span>
+                </p>
+                <p class="mt-2 text-gray-700 font-bold">
+                    You scored <span class="score"></span>
+                </p>
+            </div>
+            <hr class="border-gray-300" />
+            <div class="grid grid-cols-1 gap-1">
+                <button class="py-6 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer" id="result-clipboard">
+                    Copy result to clipboard
+                </button>
+                <button class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
+                    Start a new game
+                </button>
+            </div>
+            <hr class="border-gray-300" />
+            <div class="grid grid-cols-5 gap-1">
+                <a class="share-intent text-green-500 text-3xl text-center cursor-pointer hover:text-green-700"
+                data-intent="whatsapp"
+                    title="Share on WhatsApp">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+                <a class="share-intent text-blue-600 text-3xl text-center cursor-pointer hover:text-blue-800" data-intent="facebook"
+                    title="Share on FB">
+                    <i class="fa-brands fa-facebook"></i>
+                </a>
+                <a class="share-intent text-gray-600 text-3xl text-center cursor-pointer hover:text-gray-900" data-intent="x"
+                    title="Share on X/Twitter">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+                <a class="share-intent text-orange-500 text-3xl text-center cursor-pointer hover:text-orange-700" data-intent="reddit"
+                    title="Share on Reddit">
+                    <i class="fa-brands fa-reddit"></i>
+                </a>
+                <a class="share-intent text-blue-500 text-3xl text-center cursor-pointer hover:text-blue-700" data-intent="discord"
+                    title="Copy score with Discord spoiler tag">
+                    <i class="fa-brands fa-discord"></i>
+                </a>
+
+            </div>
+            <hr class="border-gray-300" />
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold text-gray-900">Our route:</h3>
+                    <div class="our-modal-moves">
+
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold text-gray-900">Your route:</h3>
+                    <div class="your-modal-moves">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/game.js?v=2.0.0"></script>
+
+    <script>
+        try {
+            const poGolf = new PoGolf();
+            poGolf.play();
+        } catch (error) {
+            console.error(error);
+        }
+    </script>
+</body>
+
+</html>
