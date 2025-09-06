@@ -8,6 +8,7 @@
     <title>PoGolf</title>
     <link rel="stylesheet" href="./assets/css/fontawesome.min.css">
     <link rel="stylesheet" href="./assets/css/brands.min.css">
+    <link rel="stylesheet" href="./assets/css/solid.min.css">
 </head>
 
 <style>
@@ -15,6 +16,7 @@
         100% {
             box-shadow: unset;
         }
+
         0% {
             box-shadow: 0 0 8px 8px rgba(255, 255, 255, 0.7);
         }
@@ -27,99 +29,129 @@
     .move-template:nth-child(1) .down-arrow {
         display: none;
     }
+
+    .settings-icon {
+        display: none;
+    }
 </style>
 
 <body class="bg-gray-900 text-white flex justify-center items-flex-start md:items-center">
     <div class="fixed top-5 right-5 space-y-3 z-1000" id="toast-container">
 
     </div>
-    <div class="container max-w-[80vw] mt-5 md:max-w-164  mx-auto">
-        <div class="flex flex-col items-center">
-            <h1 class="text-3xl font-bold mb-8">PoGolf</h1>
+    <div class="flex flex-col min-h-[100vh]">
+        <div class="container max-w-[80vw] mt-5 md:max-w-164  mx-auto">
+            <div class="flex flex-col items-center">
+                <div class="flex flex-row mb-8">
+                    <h1 class="text-3xl font-bold">PoGolf</h1>
+                    <div class="ms-4 font-bold self-center settings-icon cursor-pointer" id="settings-icon">
+                        <i class="fa-solid fa-cog text-xl text-gray-400"></i>
+                    </div>
+                </div>
 
-            <div id="invalid-game" class="hidden">
-                <div class="flex items-center space-x-2 bg-red-500 text-white p-4 rounded-lg">
-                    <span class="text-lg">Invalid game link.</span>
+                <div id="invalid-game" class="hidden">
+                    <div class="flex items-center space-x-2 bg-red-500 text-white p-4 rounded-lg">
+                        <span class="text-lg">Invalid game link.</span>
+                    </div>
+                </div>
+
+                <div id="game-container">
+                    <!-- Title -->
+                    <h2 class="text-xl mb-6 text-center">
+                        Get from the start Pokémon to the end Pokémon by using names that start with what the previous
+                        one
+                        ends
+                        with, in the fewest moves.
+                        <small>
+                            <br>e.g. Ekans -> Sceptile -> Eternatus
+                        </small>
+                    </h2>
+                    <hr class="border-gray-300 mb-6" />
+                    <!-- Game Grid -->
+                    <div class="grid grid-cols-7 sticky top-0 bg-gray-900 py-4">
+                        <!-- Row 1 -->
+                        <div class="flex justify-center col-span-3" id="word-one-container">
+                        </div>
+                        <!-- Right arrow -->
+                        <div class="flex justify-center items-center col-span-1">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                                </path>
+                            </svg>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="flex justify-center col-span-3" id="word-two-container">
+                        </div>
+                    </div>
+                    <hr class="border-gray-300 my-6" />
+
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex flex-col items-center" id="move-container">
+
+                        </div>
+                    </div>
+                    <div class="flex justify-center items-center mt-8 mb-8 flex-wrap" id="guess-form">
+                        <!-- Input -->
+                        <div class="flex basis-full justify-center items-center">
+                            <input type="text"
+                                class="mr-2 w-64  py-2 px-4 bg-gray-800 text-white rounded-lg font-semibold border border-gray-600 focus:outline-none focus:border-teal-500 mt-6"
+                                placeholder="Enter a Pokémon name" id="move" />
+
+                            <!-- Input Button -->
+                            <button
+                                class="mt-6 py-2 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer"
+                                id="submit-move">
+                                Submit
+                            </button>
+                        </div>
+                        <!-- Give up? -->
+                        <div class="flex basis-full justify-between mt-3 px-16">
+                            <a class="flex-shrink-0 mt-6 py-2 px-4 rounded-lg font-semibold hover:bg-red-600 cursor-pointer"
+                                title="Struggling?" id="give-up">
+                                Give up?
+                            </a>
+                            <a class="flex-shrink-0 mt-6 py-2 px-4 rounded-lg font-semibold hover:bg-gray-600 cursor-pointer"
+                                title="Share this game" id="share-game">
+                                Share
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center play-again-button hidden my-4 sticky bottom-0 bg-gray-900 py-2 w-100 flex-col"
+                    id="play-again-button-container">
+                    <p class="my-2 text-center font-bold you-won hidden">
+                        You scored <span class="score"></span>
+                    </p>
+                    <p class="my-2 text-center font-bold you-gave-up hidden">
+                        You gave up on the challenge.
+                    </p>
+                    <button id="play-again"
+                        class="py-2 px-4 mb-2 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer">
+                        New Game
+                    </button>
+                    <button id="see-results"
+                        class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer">
+                        See Results
+                    </button>
                 </div>
             </div>
-
-            <div id="game-container">
-                <!-- Title -->
-                <h2 class="text-xl mb-6 text-center">
-                    Get from the start Pokémon to the end Pokémon by using names that start with what the previous one
-                    ends
-                    with, in the fewest moves.
-                    <small>
-                        <br>e.g. Ekans -> Sceptile -> Eternatus
-                    </small>
-                </h2>
-                <hr class="border-gray-300 mb-6" />
-                <!-- Game Grid -->
-                <div class="grid grid-cols-7 sticky top-0 bg-gray-900 py-4">
-                    <!-- Row 1 -->
-                    <div class="flex justify-center col-span-3" id="word-one-container">
-                    </div>
-                    <!-- Right arrow -->
-                    <div class="flex justify-center items-center col-span-1">
-                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </div>
-                    <!-- Row 2 -->
-                    <div class="flex justify-center col-span-3" id="word-two-container">
-                    </div>
-                </div>
-                <hr class="border-gray-300 my-6" />
-
-                <div class="grid grid-cols-1 gap-2">
-                    <div class="grid grid-cols-1 gap-2" id="move-container">
-
-                    </div>
-                </div>
-                <div class="flex justify-center items-center mt-8 mb-8 flex-wrap" id="guess-form">
-                    <!-- Input -->
-                    <div class="flex basis-full justify-center items-center">
-                        <input type="text"
-                            class="mr-2 w-64  py-2 px-4 bg-gray-800 text-white rounded-lg font-semibold border border-gray-600 focus:outline-none focus:border-teal-500 mt-6"
-                            placeholder="Enter a Pokémon name" id="move" />
-
-                        <!-- Input Button -->
-                        <button class="mt-6 py-2 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer" id="submit-move">
-                            Submit
-                        </button>
-                    </div>
-                    <!-- Give up? -->
-                    <a class="flex-shrink-0 mt-6 py-2 px-4 rounded-lg font-semibold hover:bg-red-600 cursor-pointer" title="Struggling?" id="give-up">
-                        Give up?
-                    </a>
-                </div>
-            </div>
-
-            <div class="flex justify-center play-again-button hidden my-4 sticky bottom-0 bg-gray-900 py-2 w-100 flex-col" id="play-again-button-container">
-                <p class="my-2 text-center font-bold you-won hidden">
-                    You scored <span class="score"></span>
-                </p>
-                <p class="my-2 text-center font-bold you-gave-up hidden">
-                    You gave up on the challenge.
-                </p>
-                <button id="play-again"
-                    class="py-2 px-4 mb-2 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer">
-                    New Game
-                </button>
-                <button id="see-results"
-                    class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer">
-                    See Results
-                </button>
-            </div>
+        </div>
+        <div class="flex-grow-1"></div>
+        <div class="creds text-center text-gray-500 text-sm py-4">
+            peace to: <a href="https://www.pokemon.com/us/pokedex/" target="_blank" class="text-blue-500">Pokémon</a>
+            | <a href="https://fontawesome.com/" target="_blank" class="text-blue-500">Font Awesome</a>
+            | <a href="https://pokemondb.net/sprites" target="_blank" class="text-blue-500">PokemonDB</a>
         </div>
     </div>
 
     <template id="top-words-template">
         <div
-            class="md:min-w-64 w-auto flex-grow-1 bg-gray-800 rounded-lg flex justify-center items-center text-xl font-semibold border border-gray-600 p-8 pogolf-word">
-            </div>
+            class="md:min-w-64 w-auto flex-grow-1 bg-gray-800 rounded-lg flex justify-center items-center border border-gray-600 p-8">
+            <img src="" alt="" class="pogolf-image w-16 h-16 rounded-lg -translate-[20%]" />
+            <span class="pogolf-word text-xl font-semibold"></span>
+        </div>
     </template>
 
     <template id="final-score-move-template">
@@ -139,9 +171,10 @@
     </template>
 
     <template id="move-template">
-        <div class="flex justify-center">
-            <div
-                class="my-2 bg-gray-800 rounded-lg flex justify-center items-center text-xl font-semibold border border-gray-600 px-8 py-4 pogolf-word w-[80vw] md:w-64">
+        <div
+            class="flex justify-center my-2 bg-gray-800 rounded-lg flex justify-center items-center border border-gray-600 px-8 py-4 w-[80vw] md:w-64 pogolf-parent">
+            <img src="" alt="" class="pogolf-image w-16 h-16 rounded-lg -translate-[20%]" />
+            <div class="pogolf-word text-xl font-semibold">
             </div>
         </div>
     </template>
@@ -186,7 +219,8 @@
         </div>
     </template>
 
-    <div id="modal-fail" class="fixed inset-0 bg-black/[.8] flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="modal-fail"
+        class="fixed inset-0 bg-black/[.8] flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="bg-white rounded-lg w-128 p-6 space-y-4 shadow-xl relative max-h-[80vh] overflow-y-auto">
             <button data-close="modal-fail"
                 class="cursor-pointer absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-xl font-bold closeModal">&times;</button>
@@ -199,12 +233,13 @@
 
             <hr class="border-gray-300 my-2" />
             <div class="grid grid-cols-1 gap-1">
-                <button class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
+                <button
+                    class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
                     Start a new game
                 </button>
             </div>
             <hr class="border-gray-300 my-2" />
-            
+
             <div class="grid grid-cols-2 gap-3">
                 <div class="text-center">
                     <h3 class="text-xl font-semibold text-gray-900">Our route:</h3>
@@ -220,6 +255,28 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="modal-settings"
+        class="fixed inset-0 bg-black bg-black/[.8] flex justify-center items-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg w-128 p-6 space-y-4 shadow-xl relative max-h-[80vh] overflow-y-auto">
+            <button data-close="modal-settings"
+                class="cursor-pointer absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-xl font-bold closeModal">&times;</button>
+            <div class="text-center">
+                <h2 class="text-2xl font-semibold text-gray-900">Settings</h2>
+                <p class="mt-2 text-gray-700">
+                    Change the settings of the game.
+                </p>
+            </div>
+            <hr class="border-gray-300" />
+            <div class="grid grid-cols-1 gap-1">
+                <label for="game-mode" class="text-gray-700 font-semibold">Generations</label>
+                <div id="generations-container" class="grid grid-cols-1 gap-1">
+
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <div id="modal"
@@ -238,34 +295,36 @@
             </div>
             <hr class="border-gray-300" />
             <div class="grid grid-cols-1 gap-1">
-                <button class="py-6 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer" id="result-clipboard">
+                <button
+                    class="py-6 px-4 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 cursor-pointer"
+                    id="result-clipboard">
                     Copy result to clipboard
                 </button>
-                <button class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
+                <button
+                    class="py-2 px-4 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 cursor-pointer modal-play-again">
                     Start a new game
                 </button>
             </div>
             <hr class="border-gray-300" />
             <div class="grid grid-cols-5 gap-1">
                 <a class="share-intent text-green-500 text-3xl text-center cursor-pointer hover:text-green-700"
-                data-intent="whatsapp"
-                    title="Share on WhatsApp">
+                    data-intent="whatsapp" title="Share on WhatsApp">
                     <i class="fa-brands fa-whatsapp"></i>
                 </a>
-                <a class="share-intent text-blue-600 text-3xl text-center cursor-pointer hover:text-blue-800" data-intent="facebook"
-                    title="Share on FB">
+                <a class="share-intent text-blue-600 text-3xl text-center cursor-pointer hover:text-blue-800"
+                    data-intent="facebook" title="Share on FB">
                     <i class="fa-brands fa-facebook"></i>
                 </a>
-                <a class="share-intent text-gray-600 text-3xl text-center cursor-pointer hover:text-gray-900" data-intent="x"
-                    title="Share on X/Twitter">
+                <a class="share-intent text-gray-600 text-3xl text-center cursor-pointer hover:text-gray-900"
+                    data-intent="x" title="Share on X/Twitter">
                     <i class="fa-brands fa-x-twitter"></i>
                 </a>
-                <a class="share-intent text-orange-500 text-3xl text-center cursor-pointer hover:text-orange-700" data-intent="reddit"
-                    title="Share on Reddit">
+                <a class="share-intent text-orange-500 text-3xl text-center cursor-pointer hover:text-orange-700"
+                    data-intent="reddit" title="Share on Reddit">
                     <i class="fa-brands fa-reddit"></i>
                 </a>
-                <a class="share-intent text-blue-500 text-3xl text-center cursor-pointer hover:text-blue-700" data-intent="discord"
-                    title="Copy score with Discord spoiler tag">
+                <a class="share-intent text-blue-500 text-3xl text-center cursor-pointer hover:text-blue-700"
+                    data-intent="discord" title="Copy score with Discord spoiler tag">
                     <i class="fa-brands fa-discord"></i>
                 </a>
 
