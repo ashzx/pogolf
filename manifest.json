@@ -1,0 +1,20 @@
+{
+  "short_name": "PoGolf",
+  "name": "PoGolf - A Pokémon word game",
+  "icons": [
+    {
+      "src": "/assets/images/pogolf-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/images/pogolf-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#101828",
+  "background_color": "#101828"
+}

@@ -7,6 +7,7 @@ class PoGolf {
         this.selectedGens = [1,2,3,4,5,6,7,8,9,10];
         this.timer = null;
         this.gameStatus = null;
+        this.getGameType();
 
         // No pokemon end with these letters so they are impossible to move
         this.impossibleLetters = this.getImpossibleLetters();
@@ -17,7 +18,8 @@ class PoGolf {
 
         this.addEventListeners();
         this.addGenCheckboxes();
-        
+        this.loadCurrentState();
+
         this.shareIntents = {
             'facebook': 'https://www.facebook.com/sharer/sharer.php?u=',
             'x': 'https://x.com/intent/tweet?text=',
@@ -31,6 +33,23 @@ class PoGolf {
         return this.encodeName(this.wordOne) + '-' + this.encodeName(this.wordTwo);
     }
 
+    getGameType() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const game = urlParams.get('mode');
+        if (game === 'endless') {
+            this.gameType = 'endless';
+        } else {    
+            this.gameType = 'standard';
+        }
+
+        return this.gameType;
+    }
+
+    getDailyGameHash() {
+        let date = new Date();
+        return date.getFullYear().toString() + (date.getMonth() + 1).toString().padStart(2, '0') + date.getDate().toString().padStart(2, '0');
+    }
+
     invalidGameLink() {
         document.getElementById('game-container').classList.add('hidden');
         document.getElementById('invalid-game').classList.remove('hidden');
@@ -38,6 +57,17 @@ class PoGolf {
         document.getElementById('see-results').classList.add('hidden');
 
         return false;
+    }
+
+    setGameLink() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (this.gameType === "endless") {
+            urlParams.set('mode', 'endless');
+            urlParams.set('game', this.createGameLink());
+    
+            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`);
+        }
+        return this;
     }
 
     readGameLink() {
@@ -86,6 +116,23 @@ class PoGolf {
         return string;
     }
 
+    encodeGame(gameString) {
+        let string = '';
+        for (let i = 0; i < gameString.length; i++) {
+            string += gameString.charCodeAt(i).toString(16);
+        }
+
+        return string;
+    }
+
+    decodeGame(gameString) {
+        let string = '';
+        for (let i = 0; i < gameString.length; i += 2) {
+            string += String.fromCharCode(parseInt(gameString.substr(i, 2), 16));
+        }
+        return string;
+    }
+
     decodeName(pkName) {
         let string = '';
         for (let i = 0; i < pkName.length; i += 2) {
@@ -106,6 +153,7 @@ class PoGolf {
         } else if (readGameLink === false) {
             return;
         } else {
+            this.gameType = 'endless';
             [this.wordOne, this.wordTwo] = readGameLink;
         }
 
@@ -116,16 +164,40 @@ class PoGolf {
         }
 
         let gameLink = this.createGameLink();
-        //window.history.pushState({}, document.title, window.location.pathname + '?game=' + gameLink);
         
         this.solvePar = solve ? solve.length : null;
         this.solve = solve;
-        
+
+        if (this.gameType === 'standard') {
+            document.querySelector('.puzzle-par-container').textContent = `Today's Challenge, ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} - Par ${this.solvePar}`;
+            document.getElementById('share-game').classList.add('hidden');
+            document.getElementById('daily-mode-link').classList.add('hidden');
+            document.getElementById('endless-mode-link').classList.remove('hidden');
+        } else {
+            document.querySelector('.puzzle-par-container').textContent = `Endless Mode - Par ${this.solvePar}`;
+            document.getElementById('share-game').classList.remove('hidden');
+            document.getElementById('daily-mode-link').classList.remove('hidden');
+            document.getElementById('endless-mode-link').classList.add('hidden');
+        }
+
         this.addMove(this.wordOne, true);
 
         this.renderWords();
         this.renderMoves();
 
+        // Check local state for a win or fail
+        if (this.gameType === "standard") {
+            document.querySelector('#title-mode').textContent = ' - Daily Challenge';
+            if (this.gameStatus === "win") {
+                this.win(false);
+            } else if (this.gameStatus === "fail") {
+                this.giveUp(false);
+            }
+        } else {
+            document.querySelector('#title-mode').textContent = ' - Endless Mode';
+        }
+
+        this.setGameLink();
         return this;
     }
 
@@ -235,7 +307,7 @@ class PoGolf {
         document.getElementById(modalId).classList.remove('opacity-100', 'pointer-events-auto');
     }
 
-    gameEnd() {
+    gameEnd(shouldSave = true) {
         document.getElementById('play-again-button-container').classList.remove('hidden');
         document.getElementById('guess-form').classList.add('hidden');
 
@@ -252,6 +324,11 @@ class PoGolf {
         });
         this.winMessage = this.convertToGolfScore(overPar);
 
+        // Save the state before we add the final move to the array to prevent duplication
+        if (shouldSave) {
+            this.saveCurrentState();
+        }
+
         this.solve.push(this.wordTwo);
 
         // Add the moves we made to the modal
@@ -265,11 +342,115 @@ class PoGolf {
                 e.appendChild(moveElement);
             });
         });
+
+        if (this.readCurrentState().gameStatus === null) {
+           document.querySelectorAll('.modal-play-again-daily').forEach(element => {
+               element.classList.remove('hidden');
+           });
+        } else {
+            document.querySelectorAll('.modal-play-again-daily').forEach(element => {
+               element.classList.add('hidden');
+           });
+        }
+
+        if (this.gameType === "endless") {
+            document.getElementById('play-again').textContent = 'Play another round of endless mode';
+            document.querySelectorAll('.modal-play-again').forEach(element => {
+                element.textContent = 'Play another round of endless mode';
+            });
+        } else {
+            document.getElementById('play-again').textContent = 'Try endless mode';
+            document.querySelectorAll('.modal-play-again').forEach(element => {
+                element.textContent = 'Try endless mode';
+            });
+        }
     }
 
-    win() {
+
+    saveCurrentState() {
+        if (this.gameType !== 'standard') {
+            return;
+        }
+
+        let saveMoves = [...this.moves];
+
+        console.log(saveMoves);
+
+        let state = {
+            moves: saveMoves.splice(1),
+            date: this.getDailyGameHash(),
+            gameStatus: this.gameStatus,
+        };
+
+        if (typeof (Storage) === "undefined") {
+            return;
+        } else {
+            if (state.date !== this.getDailyGameHash()) {
+                localStorage.removeItem('pogolf-game-state');
+            }
+        }
+
+        localStorage.setItem('pogolf-game-state', this.encodeGame(JSON.stringify(state)));
+    }
+
+    loadCurrentState() {
+        if (this.gameType !== 'standard') {
+            return;
+        }
+
+        let state = this.readCurrentState();
+        if (!state || state.blank) {
+            return;
+        }
+
+        if (state.date !== this.getDailyGameHash()) {
+            localStorage.removeItem('pogolf-game-state');
+            return;
+        }
+
+        this.moves = state.moves;
+        this.gameStatus = state.gameStatus;
+    }
+
+    readCurrentState() {
+        let blankState = {
+            moves: [],
+            date: null,
+            gameStatus: null,
+            blank: true,
+        };
+
+        if (typeof (Storage) === "undefined") {
+            return blankState;
+        }
+
+        let state = localStorage.getItem('pogolf-game-state');
+        if (!state) {
+            return blankState;
+        }
+
+        state = JSON.parse(this.decodeGame(state));
+
+        if (state.date !== this.getDailyGameHash()) {
+            localStorage.removeItem('pogolf-game-state');
+            return blankState;
+        }
+
+        return state;
+    }
+
+
+    clearCurrentState() {
+        if (typeof (Storage) === "undefined") {
+            return;
+        }
+
+        localStorage.removeItem('pogolf-game-state');
+    }
+
+    win(shouldSave = true) {
         this.gameStatus = 'win';
-        this.gameEnd();
+        this.gameEnd(shouldSave);
         // Show the win modal
         this.showModal('modal');
         this.moves.push(this.wordTwo);
@@ -295,6 +476,7 @@ class PoGolf {
         }
 
         this.moves.push(move);
+        this.saveCurrentState();
         return this;
     }
 
@@ -334,11 +516,12 @@ class PoGolf {
         }
 
         if (moveUpper.charAt(0) !== lastmove.charAt(lastmove.length - 1)) {
+            console.log(moveUpper, lastmove);
             return this.warning('Your move must start with the last letter of the previous Pokémon', true);
         }
 
         this.addMove(move);
-
+        
 
         if (moveUpper.charAt(moveUpper.length - 1) === this.wordTwo.toUpperCase().charAt(0)) {
             this.win();
@@ -354,7 +537,11 @@ class PoGolf {
             return false;
         }
 
-        return "I just scored " + this.winMessage + " Can you beat me? https://pogolf.app?game=" + this.createGameLink();
+        if (this.gameType === 'standard') {
+            return "On PoGolf's daily challenge, I just scored " + this.winMessage + " Can you beat me? https://pogolf.app";
+        } else {
+            return "In PoGolf's endless mode, I just scored " + this.winMessage + " Can you beat my score? https://pogolf.app?game=" + this.createGameLink();
+        }
     }
 
     copyWinMessageToClipboard(shareScore = false, isWin = true) {
@@ -394,7 +581,7 @@ class PoGolf {
 
     playAgain() {
         // Remove the ?game param from the URL
-        window.history.pushState({}, document.title, window.location.pathname);
+        window.history.replaceState({}, document.title, window.location.pathname);
         document.getElementById('game-container').classList.remove('hidden');
         document.getElementById('invalid-game').classList.add('hidden');
         document.getElementById('play-again-button-container').classList.add('hidden');
@@ -409,9 +596,9 @@ class PoGolf {
         document.getElementById('move').focus();
     }
 
-    giveUp() {
+    giveUp(shouldSave = true) {
         this.gameStatus = 'fail';
-        this.gameEnd();
+        this.gameEnd(shouldSave);
         let lastGuess = this.moves[this.moves.length - 1];
         // Solve
         let checkSolve = this.checkSolve(lastGuess, this.wordTwo);
@@ -552,6 +739,26 @@ class PoGolf {
                 }
             });
         });
+
+        this.updateDailyTimer();
+        this._dailyTimer = setInterval(this.updateDailyTimer(), 1000);
+    }
+
+    updateDailyTimer() {
+        if (document.querySelectorAll('.daily-challenge-timer').length === 0) {
+            clearInterval(this._dailyTimer);
+            return;
+        }
+        let now = new Date();
+        let next = new Date();
+        next.setHours(24,0,0,0);
+        let diff = next - now;
+        let hours = Math.floor(diff / 1000 / 60 / 60);
+        let minutes = Math.floor((diff / 1000 / 60) % 60);
+        let seconds = Math.floor((diff / 1000) % 60);
+        document.querySelectorAll('.daily-challenge-timer').forEach(timer => {
+            timer.textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+        });
     }
 
     reset() {
@@ -561,6 +768,7 @@ class PoGolf {
         this.solve = null;
         this.moves = [];
         this.timer = null;
+        this.gameType = "endless";
 
         // Show the input box
         document.getElementById('guess-form').classList.remove('hidden');
@@ -631,16 +839,27 @@ class PoGolf {
     }
 
 
-    getRandomMon(not = null) {
+    getRandomMon(not = null, seed_modifier = 0) {
+        let seed = null;
+        // Check what gamemode we are on, use the days date as a prng seed if daily
+        if (this.gameType === 'standard') {
+            seed = this.getDailyGameHash();
+            seed += seed_modifier;
+
+            if (not !== null) {
+                seed += not.toString().length;
+            }
+        }
+
         // Get a random pokemon from the pokedex
-        let random = this.pokemon[Math.floor(Math.random() * this.pokemon.length)];
+        let random = this.pokemon[this.kindaRandomNumberGenerator(seed, this.pokemon.length)]; //this.pokemon[Math.floor(Math.random() * this.pokemon.length)];
         let firstLetter = random.charAt(0).toUpperCase();
         let lastLetterOfNot = not !== null ? not.charAt(not.length - 1).toUpperCase() : null;
 
         // If the random pokemon is the same as the previous one, get a new one
         // Or the second pokemon starts with a letter that another one doesn't end with like V
         if (firstLetter === lastLetterOfNot || this.impossibleLetters.includes(firstLetter)) {
-            return this.getRandomMon(not);
+            return this.getRandomMon(not, seed_modifier + 1);
         }
 
         return random;
@@ -648,7 +867,7 @@ class PoGolf {
 
     getPokemonList(gens = []) {
         let genDex = {
-            "1": ["Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch'd","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew"], 
+            "1": ["Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran","Nidorina","Nidoqueen","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch'd","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew"], 
             "2": ["Chikorita","Bayleef","Meganium","Cyndaquil","Quilava","Typhlosion","Totodile","Croconaw","Feraligatr","Sentret","Furret","Hoothoot","Noctowl","Ledyba","Ledian","Spinarak","Ariados","Crobat","Chinchou","Lanturn","Pichu","Cleffa","Igglybuff","Togepi","Togetic","Natu","Xatu","Mareep","Flaaffy","Ampharos","Bellossom","Marill","Azumarill","Sudowoodo","Politoed","Hoppip","Skiploom","Jumpluff","Aipom","Sunkern","Sunflora","Yanma","Wooper","Quagsire","Espeon","Umbreon","Murkrow","Slowking","Misdreavus","Unown","Wobbuffet","Girafarig","Pineco","Forretress","Dunsparce","Gligar","Steelix","Snubbull","Granbull","Qwilfish","Scizor","Shuckle","Heracross","Sneasel","Teddiursa","Ursaring","Slugma","Magcargo","Swinub","Piloswine","Corsola","Remoraid","Octillery","Delibird","Mantine","Skarmory","Houndour","Houndoom","Kingdra","Phanpy","Donphan","Porygon2","Stantler","Smeargle","Tyrogue","Hitmontop","Smoochum","Elekid","Magby","Miltank","Blissey","Raikou","Entei","Suicune","Larvitar","Pupitar","Tyranitar","Lugia","Ho-Oh","Celebi"],
             "3" : ["Treecko","Grovyle","Sceptile","Torchic","Combusken","Blaziken","Mudkip","Marshtomp","Swampert","Poochyena","Mightyena","Zigzagoon","Linoone","Wurmple","Silcoon","Beautifly","Cascoon","Dustox","Lotad","Lombre","Ludicolo","Seedot","Nuzleaf","Shiftry","Taillow","Swellow","Wingull","Pelipper","Ralts","Kirlia","Gardevoir","Surskit","Masquerain","Shroomish","Breloom","Slakoth","Vigoroth","Slaking","Nincada","Ninjask","Shedinja","Whismur","Loudred","Exploud","Makuhita","Hariyama","Azurill","Nosepass","Skitty","Delcatty","Sableye","Mawile","Aron","Lairon","Aggron","Meditite","Medicham","Electrike","Manectric","Plusle","Minun","Volbeat","Illumise","Roselia","Gulpin","Swalot","Carvanha","Sharpedo","Wailmer","Wailord","Numel","Camerupt","Torkoal","Spoink","Grumpig","Spinda","Trapinch","Vibrava","Flygon","Cacnea","Cacturne","Swablu","Altaria","Zangoose","Seviper","Lunatone","Solrock","Barboach","Whiscash","Corphish","Crawdaunt","Baltoy","Claydol","Lileep","Cradily","Anorith","Armaldo","Feebas","Milotic","Castform","Kecleon","Shuppet","Banette","Duskull","Dusclops","Tropius","Chimecho","Absol","Wynaut","Snorunt","Glalie","Spheal","Sealeo","Walrein","Clamperl","Huntail","Gorebyss","Relicanth","Luvdisc","Bagon","Shelgon","Salamence","Beldum","Metang","Metagross","Regirock","Regice","Registeel","Latias","Latios","Kyogre","Groudon","Rayquaza","Jirachi","Deoxys"],
             "4": ["Turtwig","Grotle","Torterra","Chimchar","Monferno","Infernape","Piplup","Prinplup","Empoleon","Starly","Staravia","Staraptor","Bidoof","Bibarel","Kricketot","Kricketune","Shinx","Luxio","Luxray","Budew","Roserade","Cranidos","Rampardos","Shieldon","Bastiodon","Burmy","Wormadam","Mothim","Combee","Vespiquen","Pachirisu","Buizel","Floatzel","Cherubi","Cherrim","Shellos","Gastrodon","Ambipom","Drifloon","Drifblim","Buneary","Lopunny","Mismagius","Honchkrow","Glameow","Purugly","Chingling","Stunky","Skuntank","Bronzor","Bronzong","Bonsly","Mime Jr.","Happiny","Chatot","Spiritomb","Gible","Gabite","Garchomp","Munchlax","Riolu","Lucario","Hippopotas","Hippowdon","Skorupi","Drapion","Croagunk","Toxicroak","Carnivine","Finneon","Lumineon","Mantyke","Snover","Abomasnow","Weavile","Magnezone","Lickilicky","Rhyperior","Tangrowth","Electivire","Magmortar","Togekiss","Yanmega","Leafeon","Glaceon","Gliscor","Mamoswine","Porygon-Z","Gallade","Probopass","Dusknoir","Froslass","Rotom","Uxie","Mesprit","Azelf","Dialga","Palkia","Heatran","Regigigas","Giratina","Cresselia","Phione","Manaphy","Darkrai","Shaymin","Arceus"],
@@ -670,5 +889,12 @@ class PoGolf {
         });
 
         return pokemon;
+    }
+
+    kindaRandomNumberGenerator(seed, max) {
+        if (seed === null) {
+            return Math.abs(Math.round(Math.random() * max));
+        }
+        return Math.abs(Math.round(Math.sin(seed) * 10000 % max));
     }
 }
