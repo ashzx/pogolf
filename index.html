@@ -94,7 +94,10 @@
                     </h4>
                     <hr class="border-gray-300 mb-6" />
                     <!-- Game Grid -->
-                    <div class="grid grid-cols-7 sticky top-0 bg-gray-900 py-4">
+                                             <h4 class="text-lg mb-2 text-center ">
+                            Target:
+                        </h4>
+                    <div class="grid grid-cols-7 sticky top-0 bg-gray-900 py-4 z-10">
                         <!-- Row 1 -->
                         <div class="flex justify-center col-span-3" id="word-one-container">
                         </div>
@@ -113,6 +116,9 @@
                     <hr class="border-gray-300 my-6" />
 
                     <div class="grid grid-cols-1 gap-2">
+                        <h4 class="text-lg mb-2 text-center ">
+                            Your moves:
+                        </h4>
                         <div class="flex flex-col items-center" id="move-container">
 
                         </div>
@@ -145,7 +151,7 @@
                     </div>
                 </div>
 
-                <div class="flex justify-center play-again-button hidden my-4 sticky bottom-0 bg-gray-900 py-2 w-100 flex-col"
+                <div class="z-10 flex justify-center play-again-button hidden my-4 sticky bottom-0 bg-gray-900 py-2 w-100 flex-col"
                     id="play-again-button-container">
                     <p class="my-2 text-center font-bold you-won hidden">
                         You scored <span class="score"></span>
@@ -173,6 +179,7 @@
             peace to: <a href="https://www.pokemon.com/us/pokedex/" target="_blank" class="text-blue-500">Pokémon</a>
             | <a href="https://fontawesome.com/" target="_blank" class="text-blue-500">Font Awesome</a>
             | <a href="https://pokemondb.net/sprites" target="_blank" class="text-blue-500">PokemonDB</a>
+            | <a href="https://tailwindcss.com/" target="_blank" class="text-blue-500">TailwindCSS</a>
         </div>
     </div>
 
@@ -203,7 +210,7 @@
     <template id="move-template">
         <div
             class="flex justify-center my-2 bg-gray-800 rounded-lg flex justify-center items-center border border-gray-600 px-8 py-4 w-[80vw] md:w-64 pogolf-parent">
-            <img src="" alt="" class="pogolf-image w-16 h-16 rounded-lg -translate-[20%]" />
+            <img src="" alt="" class="pogolf-image w-16 h-16 rounded-lg -translate-[20%] z-[1]" />
             <div class="pogolf-word text-xl font-semibold">
             </div>
         </div>

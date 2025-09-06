@@ -8,6 +8,19 @@ class PoGolf {
         this.timer = null;
         this.gameStatus = null;
         this.getGameType();
+        this._emojiEndingCards = {
+            "-3": "🦩",
+            "-2": "🦅",
+            "-1": "🐦",
+            "0": "⛳",
+            "1": "🍃",
+            "2": "🌳",
+            "3": "🏌️‍♂️",
+            "guessWord": "🟩",
+            "startWord": "🟩",
+            "endWord": "🟩",
+            "wordsOverPar": "🟥",
+        };
 
         // No pokemon end with these letters so they are impossible to move
         this.impossibleLetters = this.getImpossibleLetters();
@@ -169,7 +182,7 @@ class PoGolf {
         this.solve = solve;
 
         if (this.gameType === 'standard') {
-            document.querySelector('.puzzle-par-container').textContent = `Today's Challenge, ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} - Par ${this.solvePar}`;
+            document.querySelector('.puzzle-par-container').textContent = `Today's Challenge, ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} - Par ${this.solvePar - 1}`;
             document.getElementById('share-game').classList.add('hidden');
             document.getElementById('daily-mode-link').classList.add('hidden');
             document.getElementById('endless-mode-link').classList.remove('hidden');
@@ -281,20 +294,20 @@ class PoGolf {
 
     convertToGolfScore(count) {
         const scores = {
-            "-3": "an Albatross!",
-            "-2": "an Eagle!",
-            "-1" : "a Birdie!",
-            "0": "a Par!",
-            "1": "a Bogey!",
-            "2": "a Double Bogey!",
-            "3": "a Triple Bogey!",
+            "-3": "an Albatross",
+            "-2": "an Eagle",
+            "-1" : "a Birdie",
+            "0": "a Par",
+            "1": "a Bogey",
+            "2": "a Double Bogey",
+            "3": "a Triple Bogey",
         }
 
         if (count <= 3) {
             return scores[count];
         }
 
-        return `${count} over par!`;
+        return `${count} over par`;
     }
 
     showModal(modalId) {
@@ -320,7 +333,7 @@ class PoGolf {
 
         let overPar = (this.moves.length - 1) - (this.solvePar - 1);
         document.querySelectorAll('.score').forEach((e) => {
-            e.textContent = this.convertToGolfScore(overPar);
+            e.textContent = this.convertToGolfScore(overPar) + "!";
         });
         this.winMessage = this.convertToGolfScore(overPar);
 
@@ -539,10 +552,23 @@ class PoGolf {
             return false;
         }
 
+        let winMessageEmojis = "";
+        let moves = [...this.moves];
+        moves.shift();
+        moves.pop();
+
+        let movesOverTotal = (moves.length) - (this.solvePar -1);
+
+        winMessageEmojis += this._emojiEndingCards['startWord'];
+        winMessageEmojis += this._emojiEndingCards['guessWord'].repeat(this.solvePar -1);
+        winMessageEmojis += this._emojiEndingCards['wordsOverPar'].repeat(movesOverTotal);
+        winMessageEmojis += this._emojiEndingCards['endWord'];
+
+
         if (this.gameType === 'standard') {
-            return "On PoGolf's daily challenge, I just scored " + this.winMessage + " Can you beat me? https://pogolf.app";
+            return "I got " + this.winMessage + " in PoGolf's daily challenge. Can you beat me? https://pogolf.app " + winMessageEmojis;
         } else {
-            return "In PoGolf's endless mode, I just scored " + this.winMessage + " Can you beat my score? https://pogolf.app?game=" + this.createGameLink();
+            return "I got " + this.winMessage + "! Can you beat my score? https://pogolf.app?game=" + this.createGameLink() + " " + winMessageEmojis;
         }
     }
 
@@ -734,9 +760,7 @@ class PoGolf {
                     this.copyWinMessageToClipboard(true);
                 } else {
                     if (this.shareIntents[intent]) {
-
                         window.open(this.shareIntents[intent] + url, '_blank');
-                    } else {
                     }
                 }
             });
