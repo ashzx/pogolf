@@ -467,6 +467,8 @@ class PoGolf {
 
         document.querySelector('.you-gave-up').classList.add('hidden');
         document.querySelector('.you-won').classList.remove('hidden');
+
+        this.renderMoves();
     }
 
     addMove(move, atStart = false) {
