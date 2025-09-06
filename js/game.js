@@ -187,7 +187,7 @@ class PoGolf {
             document.getElementById('daily-mode-link').classList.add('hidden');
             document.getElementById('endless-mode-link').classList.remove('hidden');
         } else {
-            document.querySelector('.puzzle-par-container').textContent = `Endless Mode - Par ${this.solvePar}`;
+            document.querySelector('.puzzle-par-container').textContent = `Endless Mode - Par ${this.solvePar - 1}`;
             document.getElementById('share-game').classList.remove('hidden');
             document.getElementById('daily-mode-link').classList.remove('hidden');
             document.getElementById('endless-mode-link').classList.add('hidden');
