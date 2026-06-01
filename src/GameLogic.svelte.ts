@@ -51,7 +51,7 @@ const generateRandomPokemon = (ignore: string|null, seed_modifier: number  = 0):
     const firstLetterOfRandomPokemon = randomPokemon[0].toLowerCase();
     const lastLetterOfIgnoredPokemon = ignore ? ignore[ignore.length - 1].toLowerCase() : null;
 
-    if (firstLetterOfRandomPokemon === lastLetterOfIgnoredPokemon) {
+    if (firstLetterOfRandomPokemon === lastLetterOfIgnoredPokemon || randomPokemon === ignore) {
         return generateRandomPokemon(ignore, seed_modifier + 1);
     }
 
