@@ -124,8 +124,6 @@ const solveForUser = () => {
 		gameState.userSolution = [...itemsNeededToSolve];
 	}
 
-	console.log(itemsNeededToSolve);
-
 	return itemsNeededToSolve;
 }
 

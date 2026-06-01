@@ -98,9 +98,11 @@
 
 			<Button text="See results"  buttonColour="ghost-primary" class="mt-2!" onclick={() => gameState.showResults = true} />
 			
-			<div class="self-center">
-				<Button text="" icon={MaterialSettingsIcon} title="Change settings" buttonColour="ghost-secondary" onclick={openSettings} />
-			</div>
+			{#if gameState.gameType === 'endless'}
+				<div class="self-center">
+					<Button text="" icon={MaterialSettingsIcon} title="Change settings" buttonColour="ghost-secondary" onclick={openSettings} />
+				</div>
+			{/if}
 
 			<p class="mt-5 text-center font-bold">
 				<DailyChallengeReset />
