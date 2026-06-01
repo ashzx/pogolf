@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@keyframes shine-quick {
+    100% {
+        box-shadow: unset;
+    }
+
+    0% {
+        box-shadow: 0 0 8px 8px rgba(255, 255, 255, 0.7);
+    }
+}
+
+.shine-quick {
+    animation: shine-quick 1s forwards;
+}
+
+.move-template:nth-child(1) .down-arrow {
+    @apply hidden;
+}
+
+
+
+dialog.modal::backdrop {
+    @apply bg-black/80;
+}
+
+dialog.modal {
+    @apply max-w-xl rounded-md border-none p-0 w-auto mx-auto text-white top-20 z-99;
+}
+
+dialog.modal[open] {
+    animation: zoom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toast-container::backdrop {
+    @apply bg-transparent;
+}
+
+@keyframes zoom {
+    from {
+        transform: scale(0.95);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+dialog.modal[open]::backdrop {
+    animation: fade 0.2s ease-out;
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Custom Toaster */
+.toast-success {
+    @apply bg-green-500;
+}
+
+.toast-error {
+    @apply bg-red-500;
+}
+
+.toast-info {
+    @apply bg-blue-500;
+}
+
+.toast {
+    @apply px-4 py-4 rounded-md text-white font-medium min-w-64;
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast-container {
+    @apply fixed top-4 right-4 flex flex-col gap-2 z-999999 bg-transparent;
+}
+
+body.modal-open {
+    @apply overflow-hidden;
+}
+
+@keyframes shake {
+    0% {
+        transform: translate(0, 0);
+    }
+    25% {
+        transform: translate(-5px, 0);
+    }
+    50% {
+        transform: translate(5px, 0);
+    }
+    75% {
+        transform: translate(-5px, 0);
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}
+.modal-shake {
+    animation: shake 0.5s;
+}
